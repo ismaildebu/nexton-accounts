@@ -25,11 +25,13 @@ return new class extends Migration
             $table->string('account_name');
 
             $table->enum('account_type', [
-                'Asset',
-                'Liability',
-                'Income',
-                'Expense'
-            ]);
+    'Asset',
+    'Liability',
+    'Equity',
+    'Income',
+    'Expense'
+]);
+            
 
             $table->foreignId('parent_id')
                   ->nullable()

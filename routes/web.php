@@ -8,6 +8,9 @@ use App\Http\Controllers\AccountController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LedgerController;
+use App\Http\Controllers\TrialBalanceController;
+use App\Http\Controllers\ProfitLossController;
+use App\Http\Controllers\BalanceSheetController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -62,6 +65,15 @@ Route::middleware(['auth'])->group(function () {
 
         Route::get('/ledger', [LedgerController::class, 'index'])
     ->name('ledger.index');
+
+    Route::get('/trial-balance', [TrialBalanceController::class, 'index'])
+    ->name('trial-balance.index');
+
+    Route::get('/profit-loss', [ProfitLossController::class, 'index'])
+    ->name('profit-loss.index');
+
+    Route::get('/balance-sheet', [BalanceSheetController::class, 'index'])
+    ->name('balance-sheet.index');
 });
 
 require __DIR__.'/auth.php';
