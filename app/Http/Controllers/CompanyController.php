@@ -11,69 +11,84 @@ class CompanyController extends Controller
      * Display a listing of the resource.
      */
     public function index()
-{
-    $companies = Company::latest()->get();
+    {
+        $companies = Company::latest()->get();
 
-    return view('companies.index', compact('companies'));
-}
-    
+        return view('companies.index', compact('companies'));
+    }
+
 
     /**
      * Show the form for creating a new resource.
      */
-   public function create()
-{
-    return view('companies.create');
-}
-    
+    public function create()
+    {
+        return view('companies.create');
+    }
+
 
     /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
-{
-    $request->validate([
-        'company_name' => 'required|max:255',
-    ]);
-
-    Company::create([
-        'company_name' => $request->company_name,
-    ]);
-
-    return redirect()->route('companies.index')
-        ->with('success', 'Company created successfully.');
-}
-    
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
     {
-        //
+        $request->validate([
+            'company_name' => 'required|max:255',
+        ]);
+
+        Company::create([
+            'company_name' => $request->company_name,
+        ]);
+
+        return redirect()
+            ->route('companies.index')
+            ->with('success', 'Company created successfully.');
     }
+
 
     /**
      * Show the form for editing the specified resource.
      */
     public function edit(string $id)
     {
-        //
+        $company = Company::findOrFail($id);
+
+        return view('companies.edit', compact('company'));
     }
+
 
     /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, string $id)
     {
-        //
+        $request->validate([
+            'company_name' => 'required|max:255',
+        ]);
+
+        $company = Company::findOrFail($id);
+
+        $company->update([
+            'company_name' => $request->company_name,
+        ]);
+
+        return redirect()
+            ->route('companies.index')
+            ->with('success', 'Company updated successfully.');
     }
+
 
     /**
      * Remove the specified resource from storage.
      */
     public function destroy(string $id)
     {
-        //
+        $company = Company::findOrFail($id);
+
+        $company->delete();
+
+        return redirect()
+            ->route('companies.index')
+            ->with('success', 'Company deleted successfully.');
     }
 }

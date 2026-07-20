@@ -20,4 +20,8 @@ class Company extends Model
         'financial_year',
         'status',
     ];
+    public function ledgerEntries()
+{
+    return $this->hasMany(LedgerEntry::class);
+}
 }
