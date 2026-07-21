@@ -61,6 +61,10 @@
                                 Balance
                             </th>
 
+                            
+                        <th class="border p-2 text-center">
+                            Action
+                            </th>
                         </tr>
 
                     </thead>
@@ -100,7 +104,35 @@
 
                                 </td>
 
+                                
 
+<td class="border p-2 text-center">
+    <a href="{{ route('accounts.show', $account) }}"
+   class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">
+    View
+</a>
+
+    <a href="{{ route('accounts.edit', $account) }}"
+       class="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600">
+        Edit
+    </a>
+
+    <form action="{{ route('accounts.destroy', $account) }}"
+          method="POST"
+          class="inline ml-2">
+
+        @csrf
+        @method('DELETE')
+
+        <button type="submit"
+                onclick="return confirm('Are you sure you want to delete this account?')"
+                class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">
+            Delete
+        </button>
+
+    </form>
+
+</td>
                             </tr>
 
 
@@ -108,7 +140,7 @@
 
                             <tr>
 
-                                <td colspan="5"
+                                <td colspan="6"
                                     class="border p-4 text-center">
 
                                     No Account Found

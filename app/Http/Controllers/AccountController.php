@@ -67,19 +67,60 @@ class AccountController extends Controller
 
 
     public function edit(string $id)
-    {
-        //
-    }
+{
+    $account = Account::findOrFail($id);
 
+    $companies = Company::all();
 
-    public function update(Request $request, string $id)
-    {
-        //
-    }
+    $parentAccounts = Account::where('id', '!=', $id)->get();
 
+    return view('accounts.edit', compact(
+        'account',
+        'companies',
+        'parentAccounts'
+    ));
+}
 
-    public function destroy(string $id)
-    {
-        //
-    }
+public function show(string $id)
+{
+    $account = Account::findOrFail($id);
+
+    return view('accounts.show', compact('account'));
+}
+
+  public function update(Request $request, string $id)
+{
+    $request->validate([
+        'company_id' => 'required',
+        'account_name' => 'required',
+        'account_type' => 'required',
+    ]);
+
+    $account = Account::findOrFail($id);
+
+    $account->update([
+        'company_id' => $request->company_id,
+        'account_code' => $request->account_code,
+        'account_name' => $request->account_name,
+        'account_type' => $request->account_type,
+        'parent_id' => $request->parent_id,
+        'opening_balance' => $request->opening_balance ?? 0,
+        'balance_type' => $request->balance_type ?? 'Debit',
+    ]);
+
+    return redirect()
+        ->route('accounts.index')
+        ->with('success', 'Account updated successfully.');
+}
+
+   public function destroy(string $id)
+{
+    $account = Account::findOrFail($id);
+
+    $account->delete();
+
+    return redirect()
+        ->route('accounts.index')
+        ->with('success', 'Account deleted successfully.');
+}
 }
