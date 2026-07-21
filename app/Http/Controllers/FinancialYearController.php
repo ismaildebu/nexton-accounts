@@ -120,8 +120,15 @@ class FinancialYearController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
-    {
-        //
-    }
+   public function destroy(string $id)
+{
+    $financialYear = FinancialYear::findOrFail($id);
+
+    $financialYear->delete();
+
+    return redirect()
+        ->route('financial-years.index')
+        ->with('success', 'Financial Year deleted successfully.');
+}
+    
 }
