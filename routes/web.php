@@ -12,6 +12,7 @@ use App\Http\Controllers\TrialBalanceController;
 use App\Http\Controllers\ProfitLossController;
 use App\Http\Controllers\BalanceSheetController;
 use App\Http\Controllers\FinancialYearController;
+use App\Http\Controllers\VoucherTypeController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -43,6 +44,7 @@ Route::middleware(['auth'])->group(function () {
     */
     Route::resource('accounts', AccountController::class);
     Route::resource('financial-years', FinancialYearController::class);
+    Route::resource('voucher-types', VoucherTypeController::class);
 
     /*
     |--------------------------------------------------------------------------
