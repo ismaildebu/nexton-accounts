@@ -52,9 +52,38 @@
                                 {{ $voucherType->is_active ? 'Yes' : 'No' }}
                             </td>
 
-                            <td class="border p-2 text-center">
-                                Action
-                            </td>
+                    <td class="border p-2 text-center">
+
+    <a href="{{ route('voucher-types.show', $voucherType) }}"
+       class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">
+        View
+    </a>
+
+    <a href="{{ route('voucher-types.edit', $voucherType) }}"
+       class="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600 mx-1">
+        Edit
+    </a>
+
+    <form action="{{ route('voucher-types.destroy', $voucherType) }}"
+          method="POST"
+          class="inline">
+
+        @csrf
+        @method('DELETE')
+
+        <button type="submit"
+                class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                onclick="return confirm('Are you sure you want to delete this Voucher Type?')">
+            Delete
+        </button>
+
+    </form>
+
+</td>       
+
+</td>
+
+                            
 
                         </tr>
 
