@@ -1,7 +1,8 @@
 <?php
-
 namespace App\Http\Controllers;
 
+use App\Models\FinancialYear;
+use App\Models\Company;
 use Illuminate\Http\Request;
 
 class FinancialYearController extends Controller
