@@ -25,10 +25,13 @@ class VoucherTypeController extends Controller
     /**
      * Show the form for creating a new resource.
      */
+   
     public function create()
-    {
-        //
-    }
+{
+    $companies = Company::all();
+
+    return view('voucher-types.create', compact('companies'));
+}
 
     /**
      * Store a newly created resource in storage.
