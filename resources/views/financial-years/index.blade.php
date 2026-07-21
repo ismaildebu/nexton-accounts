@@ -59,6 +59,7 @@
 
                             <td class="border p-2 text-center">
                                 {{ $year->is_closed ? 'Yes' : 'No' }}
+                             </td>   
                             
                             <td class="border p-2 text-center">
 
@@ -73,8 +74,25 @@
         Edit
     </a>
 
-</td>
-                            </td>
+<form action="{{ route('financial-years.destroy', $year) }}"
+      method="POST"
+      style="display:inline;">
+
+    @csrf
+    @method('DELETE')
+
+    <button type="submit"
+            class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+            onclick="return confirm('Are you sure you want to delete this Financial Year?')">
+
+        Delete
+
+    </button>
+
+</form>
+
+
+                 </td>
                         </tr>
 
                     @empty
