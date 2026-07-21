@@ -59,11 +59,18 @@
 
                             <td class="border p-2 text-center">
                                 {{ $year->is_closed ? 'Yes' : 'No' }}
+                            
                             <td class="border p-2 text-center">
 
     <a href="{{ route('financial-years.show', $year) }}"
        class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">
         View
+    </a>
+
+
+    <a href="{{ route('financial-years.edit', $year) }}"
+       class="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600">
+        Edit
     </a>
 
 </td>

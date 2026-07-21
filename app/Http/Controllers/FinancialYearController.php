@@ -71,18 +71,50 @@ class FinancialYearController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
+   
     public function edit(string $id)
-    {
-        //
-    }
+{
+    $financialYear = \App\Models\FinancialYear::findOrFail($id);
+
+    $companies = \App\Models\Company::all();
+
+    return view('financial-years.edit', compact(
+        'financialYear',
+        'companies'
+    ));
+}
 
     /**
      * Update the specified resource in storage.
      */
+  
     public function update(Request $request, string $id)
-    {
-        //
-    }
+{
+    $request->validate([
+        'company_id' => 'required',
+        'year_name' => 'required',
+        'start_date' => 'required',
+        'end_date' => 'required',
+    ]);
+
+
+    $financialYear = FinancialYear::findOrFail($id);
+
+
+    $financialYear->update([
+        'company_id' => $request->company_id,
+        'year_name' => $request->year_name,
+        'start_date' => $request->start_date,
+        'end_date' => $request->end_date,
+        'is_active' => $request->is_active ?? 0,
+        'is_closed' => $request->is_closed ?? 0,
+    ]);
+
+
+    return redirect()
+        ->route('financial-years.index')
+        ->with('success', 'Financial Year updated successfully.');
+}
 
     /**
      * Remove the specified resource from storage.
