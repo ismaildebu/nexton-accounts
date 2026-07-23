@@ -23,19 +23,20 @@
     </x-nav-link>
 
 
-    <x-nav-link href="#">
-        📒 Accounts
-    </x-nav-link>
+    <x-nav-link :href="route('accounts.index')" :active="request()->routeIs('accounts.*')">
+    📒 Accounts
+</x-nav-link>
+    
 
 
-    <x-nav-link href="#">
-        💰 Transactions
-    </x-nav-link>
+    <x-nav-link :href="route('transactions.index')" :active="request()->routeIs('transactions.*')">
+    💰 Transactions
+</x-nav-link>
 
 
-    <x-nav-link href="#">
-        📊 Reports
-    </x-nav-link>
+    <x-nav-link :href="route('ledger.index')" :active="request()->routeIs('ledger.*')">
+    📊 Reports
+</x-nav-link>
 
 </div>
 
@@ -110,25 +111,25 @@
     </x-responsive-nav-link>
 
 
-    <x-responsive-nav-link href="#">
-
-        📒 Accounts
-
-    </x-responsive-nav-link>
-
-
-    <x-responsive-nav-link href="#">
-
-        💰 Transactions
-
-    </x-responsive-nav-link>
+    <x-responsive-nav-link
+    :href="route('accounts.index')"
+    :active="request()->routeIs('accounts.*')">
+    📒 Accounts
+</x-responsive-nav-link>
 
 
-    <x-responsive-nav-link href="#">
+    <x-responsive-nav-link
+    :href="route('transactions.index')"
+    :active="request()->routeIs('transactions.*')">
+    💰 Transactions
+</x-responsive-nav-link>
 
-        📊 Reports
 
-    </x-responsive-nav-link>
+    <x-responsive-nav-link
+    :href="route('ledger.index')"
+    :active="request()->routeIs('ledger.*')">
+    📊 Reports
+</x-responsive-nav-link>
 
 
 </div>
