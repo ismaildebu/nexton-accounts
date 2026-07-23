@@ -70,6 +70,7 @@
                             <option value="">-- Select Type --</option>
                             <option value="Asset">Asset</option>
                             <option value="Liability">Liability</option>
+                            <option value="Equity">Equity</option>
                             <option value="Income">Income</option>
                             <option value="Expense">Expense</option>
                         </select>

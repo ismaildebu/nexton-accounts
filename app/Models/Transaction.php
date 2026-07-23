@@ -7,52 +7,51 @@ use Illuminate\Database\Eloquent\Model;
 class Transaction extends Model
 {
     protected $fillable = [
+
         'company_id',
-        'account_id',
-        'debit_account_id',
-        'credit_account_id',
+        'financial_year_id',
+        'voucher_type_id',
+
         'transaction_date',
         'voucher_no',
+
         'transaction_type',
+
+        'account_id',
+
         'amount',
+
+        'narration',
+
         'description',
+
+        'status',
+
         'created_by',
     ];
-
-    /*
-    |--------------------------------------------------------------------------
-    | Relationships
-    |--------------------------------------------------------------------------
-    */
 
     public function company()
     {
         return $this->belongsTo(Company::class);
     }
 
-    // Legacy
-    public function account()
+    public function financialYear()
     {
-        return $this->belongsTo(Account::class);
+        return $this->belongsTo(FinancialYear::class);
     }
 
-    public function debitAccount()
+    public function voucherType()
     {
-        return $this->belongsTo(Account::class, 'debit_account_id');
+        return $this->belongsTo(VoucherType::class);
     }
 
-    public function creditAccount()
+    public function entries()
     {
-        return $this->belongsTo(Account::class, 'credit_account_id');
+        return $this->hasMany(LedgerEntry::class);
     }
 
     public function user()
     {
-        return $this->belongsTo(User::class, 'created_by');
-    }
-
-    public function ledgerEntries()
-    {
-        return $this->hasMany(LedgerEntry::class);
+        return $this->belongsTo(User::class,'created_by');
     }
 }

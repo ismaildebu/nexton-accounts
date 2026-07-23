@@ -42,11 +42,15 @@ class AccountController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'company_id' => 'required',
-            'account_name' => 'required',
-            'account_type' => 'required',
-        ]);
+        
+    $request->validate([
+    'company_id'      => 'required|exists:companies,id',
+    'account_code' => 'required|max:20|unique:accounts,account_code',
+    'account_name'    => 'required|max:255',
+    'account_type'    => 'required|in:Asset,Liability,Equity,Income,Expense',
+    'opening_balance' => 'nullable|numeric|min:0',
+    'balance_type'    => 'required|in:Debit,Credit',
+]);
 
 
         Account::create([
@@ -90,11 +94,15 @@ public function show(string $id)
 
   public function update(Request $request, string $id)
 {
-    $request->validate([
-        'company_id' => 'required',
-        'account_name' => 'required',
-        'account_type' => 'required',
-    ]);
+   
+$request->validate([
+    'company_id'      => 'required|exists:companies,id',
+    'account_code' => 'required|max:20|unique:accounts,account_code,' . $id,
+    'account_name'    => 'required|max:255',
+    'account_type'    => 'required|in:Asset,Liability,Equity,Income,Expense',
+    'opening_balance' => 'nullable|numeric|min:0',
+    'balance_type'    => 'required|in:Debit,Credit',
+]);
 
     $account = Account::findOrFail($id);
 

@@ -87,6 +87,11 @@
                             Liability
                         </option>
 
+                        <option value="Equity"
+                            {{ old('account_type', $account->account_type) == 'Equity' ? 'selected' : '' }}>
+                            Equity
+                        </option>
+
                         <option value="Income"
                             {{ old('account_type', $account->account_type) == 'Income' ? 'selected' : '' }}>
                             Income

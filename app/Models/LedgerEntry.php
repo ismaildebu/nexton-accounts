@@ -7,12 +7,19 @@ use Illuminate\Database\Eloquent\Model;
 class LedgerEntry extends Model
 {
     protected $fillable = [
+
         'transaction_id',
+
         'company_id',
+
         'account_id',
+
         'entry_date',
+
         'debit',
+
         'credit',
+
         'description',
     ];
 
@@ -21,13 +28,13 @@ class LedgerEntry extends Model
         return $this->belongsTo(Transaction::class);
     }
 
-    public function company()
-    {
-        return $this->belongsTo(Company::class);
-    }
-
     public function account()
     {
         return $this->belongsTo(Account::class);
+    }
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
     }
 }
