@@ -9,60 +9,66 @@ class DashboardController extends Controller
 {
     public function index()
     {
+
         $companyId = session('company_id');
 
 
-        // Cash Balance
+        if(!$companyId){
+            return redirect()
+                ->route('companies.index')
+                ->with('error','Please select company first.');
+        }
 
-        $cashAccount = Account::where('company_id', $companyId)
-            ->where('account_name', 'LIKE', '%Cash%')
+
+
+        // Cash Account
+
+        $cashAccount = Account::where('company_id',$companyId)
+            ->where('account_name','LIKE','%Cash%')
             ->first();
 
 
+
+        // Bank Account
+
+        $bankAccount = Account::where('company_id',$companyId)
+            ->where('account_name','LIKE','%Bank%')
+            ->first();
+
+
+
         $cashBalance = 0;
+        $bankBalance = 0;
 
 
-        if ($cashAccount) {
 
-            $debit = LedgerEntry::where('company_id', $companyId)
-                ->where('account_id', $cashAccount->id)
-                ->sum('debit');
+        if($cashAccount)
+        {
 
-
-            $credit = LedgerEntry::where('company_id', $companyId)
-                ->where('account_id', $cashAccount->id)
+            $cashBalance = LedgerEntry::where('company_id',$companyId)
+                ->where('account_id',$cashAccount->id)
+                ->sum('debit')
+                -
+                LedgerEntry::where('company_id',$companyId)
+                ->where('account_id',$cashAccount->id)
                 ->sum('credit');
 
-
-            $cashBalance = $debit - $credit;
         }
 
 
 
 
-        // Bank Balance
+        if($bankAccount)
+        {
 
-        $bankAccount = Account::where('company_id', $companyId)
-            ->where('account_name', 'LIKE', '%Bank%')
-            ->first();
-
-
-        $bankBalance = 0;
-
-
-        if ($bankAccount) {
-
-            $debit = LedgerEntry::where('company_id', $companyId)
-                ->where('account_id', $bankAccount->id)
-                ->sum('debit');
-
-
-            $credit = LedgerEntry::where('company_id', $companyId)
-                ->where('account_id', $bankAccount->id)
+            $bankBalance = LedgerEntry::where('company_id',$companyId)
+                ->where('account_id',$bankAccount->id)
+                ->sum('debit')
+                -
+                LedgerEntry::where('company_id',$companyId)
+                ->where('account_id',$bankAccount->id)
                 ->sum('credit');
 
-
-            $bankBalance = $debit - $credit;
         }
 
 
@@ -70,13 +76,9 @@ class DashboardController extends Controller
 
         // Today's Income
 
-        $todayIncome = LedgerEntry::where('company_id', $companyId)
-            ->whereDate('entry_date', today())
-            ->whereHas('account', function($q){
-
-                $q->where('account_type','Income');
-
-            })
+        $todayIncome = LedgerEntry::where('company_id',$companyId)
+            ->whereDate('entry_date',today())
+            ->where('credit','>',0)
             ->sum('credit');
 
 
@@ -84,28 +86,23 @@ class DashboardController extends Controller
 
         // Today's Expense
 
-        $todayExpense = LedgerEntry::where('company_id', $companyId)
-            ->whereDate('entry_date', today())
-            ->whereHas('account', function($q){
-
-                $q->where('account_type','Expense');
-
-            })
+        $todayExpense = LedgerEntry::where('company_id',$companyId)
+            ->whereDate('entry_date',today())
+            ->where('debit','>',0)
             ->sum('debit');
 
 
 
 
-        return view('dashboard', compact(
+
+        return view('dashboard',compact(
 
             'cashBalance',
-
             'bankBalance',
-
             'todayIncome',
-
             'todayExpense'
 
         ));
+
     }
 }

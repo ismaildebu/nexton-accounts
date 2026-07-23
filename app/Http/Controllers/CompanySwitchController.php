@@ -8,6 +8,7 @@ class CompanySwitchController extends Controller
 {
     public function switch(Request $request)
     {
+
         $request->validate([
             'company_id' => 'required|exists:companies,id',
         ]);
@@ -18,7 +19,9 @@ class CompanySwitchController extends Controller
         ]);
 
 
-        return back()
-            ->with('success', 'Company switched successfully.');
+        return redirect()
+            ->back()
+            ->with('success','Company switched successfully.');
+
     }
 }

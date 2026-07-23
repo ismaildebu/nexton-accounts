@@ -37,12 +37,18 @@ class TransactionController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-   public function create()
+  public function create()
 {
     $companyId = session('company_id');
 
+    if(!$companyId){
+        return redirect()
+            ->route('dashboard')
+            ->with('error','Please select company first.');
+    }
 
-    $company = Company::find($companyId);
+
+    $company = Company::findOrFail($companyId);
 
 
     $accounts = Account::where('company_id', $companyId)
