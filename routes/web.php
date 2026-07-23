@@ -13,6 +13,7 @@ use App\Http\Controllers\ProfitLossController;
 use App\Http\Controllers\BalanceSheetController;
 use App\Http\Controllers\FinancialYearController;
 use App\Http\Controllers\VoucherTypeController;
+use App\Http\Controllers\CompanySwitchController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -36,6 +37,17 @@ Route::middleware(['auth'])->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::resource('companies', CompanyController::class);
+
+
+
+    /*
+|-------------------------------------------------------------------------- 
+| Company Switch
+|-------------------------------------------------------------------------- 
+*/
+
+Route::post('/switch-company', [CompanySwitchController::class, 'switch'])
+    ->name('switch.company');
 
     /*
     |--------------------------------------------------------------------------

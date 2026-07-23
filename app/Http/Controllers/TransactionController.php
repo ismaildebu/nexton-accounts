@@ -16,29 +16,45 @@ class TransactionController extends Controller
      * Display a listing of the resource.
      */
     public function index()
-    {
-        $transactions = Transaction::with([
-            'company',
-            'account',
-            'user'
-        ])->latest()->paginate(20);
+{
+    $companyId = session('company_id');
 
-        return view('transactions.index', compact('transactions'));
-    }
+
+    $transactions = Transaction::with([
+        'company',
+        'account',
+        'user'
+    ])
+    ->where('company_id', $companyId)
+    ->latest()
+    ->paginate(20);
+
+
+    return view('transactions.index', compact('transactions'));
+}
+    
 
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
-    {
-        $companies = Company::orderBy('company_name')->get();
-        $accounts  = Account::orderBy('account_code')->get();
+   public function create()
+{
+    $companyId = session('company_id');
 
-        return view('transactions.create', compact(
-            'companies',
-            'accounts'
-        ));
-    }
+
+    $company = Company::find($companyId);
+
+
+    $accounts = Account::where('company_id', $companyId)
+        ->orderBy('account_code')
+        ->get();
+
+
+    return view('transactions.create', compact(
+        'company',
+        'accounts'
+    ));
+}
 
     /**
      * Store a newly created resource in storage.
@@ -46,7 +62,7 @@ class TransactionController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'company_id'        => 'required|exists:companies,id',
+            
             'debit_account_id'  => 'required|exists:accounts,id',
             'credit_account_id' => 'required|exists:accounts,id|different:debit_account_id',
             'transaction_date'  => 'required|date',

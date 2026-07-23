@@ -16,11 +16,19 @@ class Account extends Model
         'balance_type',
     ];
 
+
+    protected $casts = [
+        'account_code' => 'integer',
+        'opening_balance' => 'decimal:2',
+    ];
+
+
     /*
     |--------------------------------------------------------------------------
     | Relationships
     |--------------------------------------------------------------------------
     */
+
 
     // Company
     public function company()
@@ -28,11 +36,13 @@ class Account extends Model
         return $this->belongsTo(Company::class);
     }
 
+
     // Parent Account
     public function parent()
     {
         return $this->belongsTo(Account::class, 'parent_id');
     }
+
 
     // Child Accounts
     public function children()
@@ -40,11 +50,13 @@ class Account extends Model
         return $this->hasMany(Account::class, 'parent_id');
     }
 
+
     // Legacy Transactions
     public function transactions()
     {
         return $this->hasMany(Transaction::class);
     }
+
 
     // Debit Transactions
     public function debitTransactions()
@@ -52,11 +64,13 @@ class Account extends Model
         return $this->hasMany(Transaction::class, 'debit_account_id');
     }
 
+
     // Credit Transactions
     public function creditTransactions()
     {
         return $this->hasMany(Transaction::class, 'credit_account_id');
     }
+
 
     // Ledger Entries
     public function ledgerEntries()

@@ -8,21 +8,56 @@ use Illuminate\Http\Request;
 
 class AccountController extends Controller
 {
-    /**
-     * Display a listing of accounts.
-     */
-    public function index()
-    {
-        $accounts = Account::with('company')
-            ->latest()
-            ->get();
 
-        return view('accounts.index', compact('accounts'));
+    /**
+     * Generate Automatic Account Code
+     */
+    private function generateAccountCode($type)
+    {
+        $prefix = [
+            'Asset'     => 1000,
+            'Expense'   => 2000,
+            'Liability' => 3000,
+            'Equity'    => 4000,
+            'Income'    => 5000,
+        ];
+
+
+        $lastAccount = Account::where('account_type', $type)
+            ->orderBy('account_code', 'desc')
+            ->first();
+
+
+        if ($lastAccount) {
+            return $lastAccount->account_code + 1;
+        }
+
+
+        return $prefix[$type] + 1;
     }
 
 
+
     /**
-     * Show create account form.
+     * Display accounts
+     */
+    public function index()
+{
+    $companyId = session('company_id');
+
+
+    $accounts = Account::with('company')
+        ->where('company_id', $companyId)
+        ->latest()
+        ->get();
+
+
+    return view('accounts.index', compact('accounts'));
+}
+
+
+    /**
+     * Create Account Form
      */
     public function create()
     {
@@ -37,31 +72,44 @@ class AccountController extends Controller
     }
 
 
+
     /**
-     * Store new account.
+     * Store Account
      */
     public function store(Request $request)
     {
-        
-    $request->validate([
-    'company_id'      => 'required|exists:companies,id',
-    'account_code' => 'required|max:20|unique:accounts,account_code',
-    'account_name'    => 'required|max:255',
-    'account_type'    => 'required|in:Asset,Liability,Equity,Income,Expense',
-    'opening_balance' => 'nullable|numeric|min:0',
-    'balance_type'    => 'required|in:Debit,Credit',
-]);
+
+        $request->validate([
+            'company_id'      => 'required|exists:companies,id',
+            'account_name'    => 'required|max:255',
+            'account_type'    => 'required|in:Asset,Liability,Equity,Income,Expense',
+            'opening_balance' => 'nullable|numeric|min:0',
+            'balance_type'    => 'required|in:Debit,Credit',
+        ]);
+
 
 
         Account::create([
+
             'company_id' => $request->company_id,
-            'account_code' => $request->account_code,
+
+            // Auto Generated Code
+            'account_code' => $this->generateAccountCode(
+                $request->account_type
+            ),
+
             'account_name' => $request->account_name,
+
             'account_type' => $request->account_type,
+
             'parent_id' => $request->parent_id,
+
             'opening_balance' => $request->opening_balance ?? 0,
+
             'balance_type' => $request->balance_type ?? 'Debit',
+
         ]);
+
 
 
         return redirect()
@@ -70,65 +118,112 @@ class AccountController extends Controller
     }
 
 
+
+
+    /**
+     * Edit Account
+     */
     public function edit(string $id)
-{
-    $account = Account::findOrFail($id);
+    {
+        $account = Account::findOrFail($id);
 
-    $companies = Company::all();
+        $companies = Company::all();
 
-    $parentAccounts = Account::where('id', '!=', $id)->get();
+        $parentAccounts = Account::where('id','!=',$id)->get();
 
-    return view('accounts.edit', compact(
-        'account',
-        'companies',
-        'parentAccounts'
-    ));
-}
 
-public function show(string $id)
-{
-    $account = Account::findOrFail($id);
+        return view('accounts.edit', compact(
+            'account',
+            'companies',
+            'parentAccounts'
+        ));
+    }
 
-    return view('accounts.show', compact('account'));
-}
 
-  public function update(Request $request, string $id)
-{
-   
-$request->validate([
-    'company_id'      => 'required|exists:companies,id',
-    'account_code' => 'required|max:20|unique:accounts,account_code,' . $id,
-    'account_name'    => 'required|max:255',
-    'account_type'    => 'required|in:Asset,Liability,Equity,Income,Expense',
-    'opening_balance' => 'nullable|numeric|min:0',
-    'balance_type'    => 'required|in:Debit,Credit',
-]);
 
-    $account = Account::findOrFail($id);
 
-    $account->update([
-        'company_id' => $request->company_id,
-        'account_code' => $request->account_code,
-        'account_name' => $request->account_name,
-        'account_type' => $request->account_type,
-        'parent_id' => $request->parent_id,
-        'opening_balance' => $request->opening_balance ?? 0,
-        'balance_type' => $request->balance_type ?? 'Debit',
-    ]);
+    /**
+     * Show Account
+     */
+    public function show(string $id)
+    {
+        $account = Account::findOrFail($id);
 
-    return redirect()
-        ->route('accounts.index')
-        ->with('success', 'Account updated successfully.');
-}
+        return view('accounts.show', compact('account'));
+    }
 
-   public function destroy(string $id)
-{
-    $account = Account::findOrFail($id);
 
-    $account->delete();
 
-    return redirect()
-        ->route('accounts.index')
-        ->with('success', 'Account deleted successfully.');
-}
+
+    /**
+     * Update Account
+     */
+    public function update(Request $request, string $id)
+    {
+
+        $request->validate([
+
+            'company_id'      => 'required|exists:companies,id',
+
+            'account_name'    => 'required|max:255',
+
+            'account_type'    => 'required|in:Asset,Liability,Equity,Income,Expense',
+
+            'opening_balance' => 'nullable|numeric|min:0',
+
+            'balance_type'    => 'required|in:Debit,Credit',
+
+        ]);
+
+
+
+        $account = Account::findOrFail($id);
+
+
+
+        $account->update([
+
+            'company_id' => $request->company_id,
+
+            // Existing code থাকবে
+            'account_code' => $account->account_code,
+
+            'account_name' => $request->account_name,
+
+            'account_type' => $request->account_type,
+
+            'parent_id' => $request->parent_id,
+
+            'opening_balance' => $request->opening_balance ?? 0,
+
+            'balance_type' => $request->balance_type ?? 'Debit',
+
+        ]);
+
+
+
+        return redirect()
+            ->route('accounts.index')
+            ->with('success','Account updated successfully.');
+    }
+
+
+
+
+
+    /**
+     * Delete Account
+     */
+    public function destroy(string $id)
+    {
+        $account = Account::findOrFail($id);
+
+        $account->delete();
+
+
+        return redirect()
+            ->route('accounts.index')
+            ->with('success','Account deleted successfully.');
+    }
+
 }

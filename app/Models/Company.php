@@ -19,9 +19,12 @@ class Company extends Model
         'currency_symbol',
         'financial_year',
         'status',
+        'business_type',
     ];
+
+
     public function ledgerEntries()
-{
-    return $this->hasMany(LedgerEntry::class);
-}
+    {
+        return $this->hasMany(LedgerEntry::class);
+    }
 }
