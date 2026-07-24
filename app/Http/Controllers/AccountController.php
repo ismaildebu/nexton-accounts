@@ -2,228 +2,199 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\AccountCodeRangeExceededException;
+use App\Exceptions\CannotDeleteAccountException;
 use App\Models\Account;
 use App\Models\Company;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class AccountController extends Controller
 {
-
     /**
-     * Generate Automatic Account Code
+     * Display accounts list with search and filters
      */
-    private function generateAccountCode($type)
+    public function index(Request $request)
     {
-        $prefix = [
-            'Asset'     => 1000,
-            'Expense'   => 2000,
-            'Liability' => 3000,
-            'Equity'    => 4000,
-            'Income'    => 5000,
-        ];
+        $companyId = session('company_id', auth()->user()->company_id ?? null);
 
+        $query = Account::forCompany($companyId)->with(['parent', 'company']);
 
-        $lastAccount = Account::where('account_type', $type)
-            ->orderBy('account_code', 'desc')
-            ->first();
-
-
-        if ($lastAccount) {
-            return $lastAccount->account_code + 1;
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('account_name', 'like', "%{$search}%")
+                  ->orWhere('account_code', 'like', "%{$search}%");
+            });
         }
 
+        if ($request->filled('type')) {
+            $query->ofType($request->type);
+        }
 
-        return $prefix[$type] + 1;
+        if ($request->filled('status')) {
+            $query->where('is_active', $request->status == 'active');
+        }
+
+        $accounts = $query->orderBy('account_code', 'asc')
+            ->paginate(20)
+            ->withQueryString();
+
+        return view('accounts.index', compact('accounts'));
     }
 
-
-
     /**
-     * Display accounts
-     */
-    public function index()
-{
-    $companyId = session('company_id');
-
-
-    $accounts = Account::with('company')
-        ->where('company_id', $companyId)
-        ->latest()
-        ->get();
-
-
-    return view('accounts.index', compact('accounts'));
-}
-
-
-    /**
-     * Create Account Form
+     * Show form for creating a new account
      */
     public function create()
     {
-        $companies = Company::all();
+        $companyId = session('company_id', auth()->user()->company_id ?? null);
 
-        $parentAccounts = Account::all();
+        $companies = auth()->user()->companies ?? Company::where('id', $companyId)->get();
+        
+        $parentAccounts = Account::forCompany($companyId)
+            ->active()
+            ->orderBy('account_code', 'asc')
+            ->get();
 
-        return view('accounts.create', compact(
-            'companies',
-            'parentAccounts'
-        ));
+        return view('accounts.create', compact('companies', 'parentAccounts'));
     }
 
-
-
     /**
-     * Store Account
+     * Store a newly created account
      */
     public function store(Request $request)
     {
-
         $request->validate([
             'company_id'      => 'required|exists:companies,id',
-            'account_name'    => 'required|max:255',
-            'account_type'    => 'required|in:Asset,Liability,Equity,Income,Expense',
+            'account_name'    => 'required|string|max:255',
+            'account_type'    => ['required', Rule::in(Account::accountTypes())],
+            'nature'          => ['required', Rule::in(Account::accountNatures())],
+            'parent_id'       => 'nullable|exists:accounts,id',
+            'color'           => 'nullable|string|max:20',
             'opening_balance' => 'nullable|numeric|min:0',
-            'balance_type'    => 'required|in:Debit,Credit',
         ]);
 
+        $companyId = $request->company_id;
+        $accountType = $request->account_type;
+        $level = 1;
 
+        if ($request->filled('parent_id')) {
+            $parent = Account::forCompany($companyId)->find($request->parent_id);
 
-        Account::create([
+            if (!$parent) {
+                return back()->withErrors(['parent_id' => 'প্যারেন্ট অ্যাকাউন্টটি একই কোম্পানির হতে হবে!'])->withInput();
+            }
 
-            'company_id' => $request->company_id,
+            if ($parent->account_type !== $accountType) {
+                return back()->withErrors(['account_type' => 'প্যারেন্ট ও চাইল্ড অ্যাকাউন্টের Type একই হতে হবে!'])->withInput();
+            }
 
-            // Auto Generated Code
-            'account_code' => $this->generateAccountCode(
-                $request->account_type
-            ),
+            $level = $parent->level + 1;
 
-            'account_name' => $request->account_name,
+            if ($level > 5) {
+                return back()->withErrors(['parent_id' => 'সর্বোচ্চ ৫ লেভেল পর্যন্ত সাব-অ্যাকাউন্ট তৈরি করা যাবে!'])->withInput();
+            }
+        }
 
-            'account_type' => $request->account_type,
+        try {
+            return DB::transaction(function () use ($request, $companyId, $accountType, $level) {
+                $accountCode = Account::generateNextCode($accountType, $companyId);
+                $balanceType = Account::defaultBalanceType($accountType);
 
-            'parent_id' => $request->parent_id,
+                $account = new Account([
+                    'company_id'      => $companyId,
+                    'account_name'    => $request->account_name,
+                    'account_type'    => $accountType,
+                    'parent_id'       => $request->parent_id,
+                    'nature'          => $request->nature,
+                    'level'           => $level,
+                    'color'           => $request->color,
+                    'is_system'       => false,
+                    'is_active'       => true,
+                    'opening_balance' => $request->opening_balance ?? 0,
+                    'balance_type'    => $balanceType,
+                ]);
 
-            'opening_balance' => $request->opening_balance ?? 0,
+                $account->account_code = $accountCode;
+                $account->save();
 
-            'balance_type' => $request->balance_type ?? 'Debit',
-
-        ]);
-
-
-
-        return redirect()
-            ->route('accounts.index')
-            ->with('success', 'Account created successfully.');
+                return redirect()->route('accounts.index')->with('success', "অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে (কোড: {$accountCode})");
+            });
+        } catch (AccountCodeRangeExceededException $e) {
+            return back()->with('error', $e->getMessage())->withInput();
+        } catch (\Exception $e) {
+            return back()->with('error', 'অ্যাকাউন্ট তৈরি করতে সমস্যা হয়েছে: ' . $e->getMessage())->withInput();
+        }
     }
 
-
-
-
     /**
-     * Edit Account
+     * Show form for editing an account
      */
     public function edit(string $id)
     {
-        $account = Account::findOrFail($id);
+        $companyId = session('company_id', auth()->user()->company_id ?? null);
+        $account = Account::forCompany($companyId)->findOrFail($id);
 
-        $companies = Company::all();
+        $parentAccounts = Account::forCompany($companyId)
+            ->where('id', '!=', $id)
+            ->orderBy('account_code', 'asc')
+            ->get();
 
-        $parentAccounts = Account::where('id','!=',$id)->get();
+        $hasTransactions = $account->hasTransactions();
 
-
-        return view('accounts.edit', compact(
-            'account',
-            'companies',
-            'parentAccounts'
-        ));
+        return view('accounts.edit', compact('account', 'parentAccounts', 'hasTransactions'));
     }
 
-
-
-
     /**
-     * Show Account
-     */
-    public function show(string $id)
-    {
-        $account = Account::findOrFail($id);
-
-        return view('accounts.show', compact('account'));
-    }
-
-
-
-
-    /**
-     * Update Account
+     * Update account details
      */
     public function update(Request $request, string $id)
     {
+        $companyId = session('company_id', auth()->user()->company_id ?? null);
+        $account = Account::forCompany($companyId)->findOrFail($id);
 
         $request->validate([
-
-            'company_id'      => 'required|exists:companies,id',
-
-            'account_name'    => 'required|max:255',
-
-            'account_type'    => 'required|in:Asset,Liability,Equity,Income,Expense',
-
-            'opening_balance' => 'nullable|numeric|min:0',
-
-            'balance_type'    => 'required|in:Debit,Credit',
-
+            'account_name' => 'required|string|max:255',
+            'nature'       => ['required', Rule::in(Account::accountNatures())],
+            'color'        => 'nullable|string|max:20',
+            'is_active'    => 'required|boolean',
         ]);
 
+        return DB::transaction(function () use ($request, $account) {
+            $data = [
+                'account_name' => $request->account_name,
+                'nature'       => $request->nature,
+                'color'        => $request->color,
+                'is_active'    => $request->is_active,
+            ];
 
+            if (!$account->hasTransactions() && $request->has('opening_balance')) {
+                $data['opening_balance'] = $request->opening_balance ?? 0;
+            }
 
-        $account = Account::findOrFail($id);
+            $account->update($data);
 
-
-
-        $account->update([
-
-            'company_id' => $request->company_id,
-
-            // Existing code থাকবে
-            'account_code' => $account->account_code,
-
-            'account_name' => $request->account_name,
-
-            'account_type' => $request->account_type,
-
-            'parent_id' => $request->parent_id,
-
-            'opening_balance' => $request->opening_balance ?? 0,
-
-            'balance_type' => $request->balance_type ?? 'Debit',
-
-        ]);
-
-
-
-        return redirect()
-            ->route('accounts.index')
-            ->with('success','Account updated successfully.');
+            return redirect()->route('accounts.index')->with('success', 'অ্যাকাউন্ট সফলভাবে আপডেট হয়েছে!');
+        });
     }
 
-
-
-
-
     /**
-     * Delete Account
+     * Delete account
      */
     public function destroy(string $id)
     {
-        $account = Account::findOrFail($id);
+        $companyId = session('company_id', auth()->user()->company_id ?? null);
+        $account = Account::forCompany($companyId)->findOrFail($id);
 
-        $account->delete();
-
-
-        return redirect()
-            ->route('accounts.index')
-            ->with('success','Account deleted successfully.');
+        try {
+            $account->delete();
+            return redirect()->route('accounts.index')->with('success', 'অ্যাকাউন্ট সফলভাবে ডিলিট হয়েছে!');
+        } catch (CannotDeleteAccountException $e) {
+            return back()->with('error', $e->getMessage());
+        } catch (\Exception $e) {
+            return back()->with('error', 'অ্যাকাউন্ট ডিলিট করা যায়নি।');
+        }
     }
-
 }
